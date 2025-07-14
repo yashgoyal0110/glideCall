@@ -5,8 +5,7 @@ import { OctagonAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/compat/router";
-
+//  next/compat/router
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
@@ -20,17 +19,22 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Alert, AlertTitle } from "@/components/ui/alert";
+import { useRouter } from "next/compat/router";
+import { FaGithub, FaGoogle } from "react-icons/fa";
 
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword:z.string().min(6, "Password must be at least 6 characters"),
-})
-.refine((data)=>data.confirmPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path : ["confirmPassword"],
-})
+const formSchema = z
+  .object({
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z
+      .string()
+      .min(6, "Password must be at least 6 characters"),
+  })
+  .refine((data) => data.confirmPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 export const SignUpView = () => {
   const router = useRouter();
@@ -54,10 +58,14 @@ export const SignUpView = () => {
         name: data.name,
         email: data.email,
         password: data.password,
+        callbackURL: "/",
       },
       {
         onSuccess: () => {
-          router.push("/");
+          setPending(false);
+          router &&
+            router.push("/");
+          
         },
         onError: ({ error }) => {
           console.error("Sign-in error:", error);
@@ -65,8 +73,27 @@ export const SignUpView = () => {
         },
       }
     );
+  };
 
-}
+    const onSocial = (provider: "github" | "google") => {
+    setError(null);
+    setPending(true);
+    authClient.signIn.social(
+      {
+       provider: provider,
+       callbackURL : "/"
+      },
+      {
+        onSuccess: () => {
+          setPending(false);
+        },
+        onError: ({ error }) => {
+          setPending(false);
+          setError(error.message);
+        },
+      }
+    );
+  };
   return (
     <div className="flex flex-col gap-6">
       <Card className="overflow-hidden p-0">
@@ -82,7 +109,7 @@ export const SignUpView = () => {
                     Create your account
                   </p>
                 </div>
-                   <div className="grid gap-3">
+                <div className="grid gap-3">
                   <FormField
                     control={form.control}
                     name="name"
@@ -127,7 +154,7 @@ export const SignUpView = () => {
                     )}
                   />
                 </div>
-                      <div className="grid gap-3">
+                <div className="grid gap-3">
                   <FormField
                     control={form.control}
                     name="confirmPassword"
@@ -157,15 +184,25 @@ export const SignUpView = () => {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="w-full" disabled={pending}>
-                    Google
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={pending}
+                      onClick={()=>onSocial("google")}
+                  >
+                    <FaGoogle className="ml-2" /> Google 
                   </Button>
-                  <Button variant="outline" className="w-full" disabled={pending}>
-                    Github
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={pending}
+                    onClick={()=>onSocial("github")}
+                  >
+                   <FaGithub className="ml-2" /> Google 
                   </Button>
                 </div>
                 <div className="text-center text-sm">
-                 Already have an account?{" "}
+                  Already have an account?{" "}
                   <Link
                     href="/sign-in"
                     className="underline underline-offset-4"
